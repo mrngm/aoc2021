@@ -10,6 +10,7 @@ import (
 
 var (
 	inputFile = flag.String("input", "input", "The input file")
+	aimToggle = flag.Bool("aim", false, "Use aim")
 )
 
 type Direction int
@@ -37,6 +38,25 @@ func Dive(inputs []CourseOp) (int, int) {
 			depth += op.Steps
 		case DirectionUp:
 			depth -= op.Steps
+		}
+	}
+
+	return hPos, depth
+}
+
+func DiveAim(inputs []CourseOp) (int, int) {
+	hPos, depth := 0, 0
+	aim := 0
+
+	for _, op := range inputs {
+		switch op.Course {
+		case DirectionForward:
+			hPos += op.Steps
+			depth += aim * op.Steps
+		case DirectionDown:
+			aim += op.Steps
+		case DirectionUp:
+			aim -= op.Steps
 		}
 	}
 
@@ -90,6 +110,11 @@ func main() {
 		lines[n] = strings.TrimSpace(line)
 	}
 	diveCourse := ParseDiveCourse(lines)
-	hPos, depth := Dive(diveCourse)
-	log.Printf("After %d course operations, we ended up at horizontal position %d, and depth %d: %d", len(diveCourse), hPos, depth, hPos*depth)
+	if *aimToggle {
+		hPos, depth := DiveAim(diveCourse)
+		log.Printf("After %d course operations with aim, we ended up at horizontal position %d, and depth %d: %d", len(diveCourse), hPos, depth, hPos*depth)
+	} else {
+		hPos, depth := Dive(diveCourse)
+		log.Printf("After %d course operations, we ended up at horizontal position %d, and depth %d: %d", len(diveCourse), hPos, depth, hPos*depth)
+	}
 }

@@ -6,8 +6,10 @@ import (
 )
 
 const (
-	testHPos  = 15
-	testDepth = 10
+	testHPos     = 15
+	testDepth    = 10
+	testAimHPos  = 15
+	testAimDepth = 60
 )
 
 var (
@@ -36,4 +38,12 @@ func TestParseCourse(t *testing.T) {
 		t.Fatalf("%s: parsing dive course (%+v) failed, expected course: %+v", t.Name(), course, testInput)
 	}
 	t.Logf("%s: parsing dive course (%+v) succeeded (expected course: %+v)", t.Name(), course, testInput)
+}
+
+func TestDiveAim(t *testing.T) {
+	hPos, depth := DiveAim(testInput)
+	if hPos != testAimHPos && depth != testAimDepth {
+		t.Fatalf("%s: hPos: %d, depth: %d, expected: %d, %d", t.Name(), hPos, depth, testAimHPos, testAimDepth)
+	}
+	t.Logf("%s: hPos: %d, depth: %d, expected: %d, %d", t.Name(), hPos, depth, testAimHPos, testAimDepth)
 }
