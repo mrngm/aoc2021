@@ -11,7 +11,8 @@ import (
 )
 
 var (
-	inputFile = flag.String("input", "input", "The input file")
+	inputFile   = flag.String("input", "input", "The input file")
+	lastWinning = flag.Bool("lastWin", false, "Get the scores of the last winning board")
 )
 
 var (
@@ -97,6 +98,42 @@ func PlayGame(numbers []int, boards []*Board) (int, int) {
 	return 0, 0
 }
 
+func PlayGameLastWinning(numbers []int, boards []*Board) (int, int) {
+	winningBoards := make(map[int]struct{})
+	lastNumber, lastScore := 0, 0
+	for _, num := range numbers {
+		log.Printf("pulled number %d", num)
+	boardLoop:
+		for bi, b := range boards {
+			err := b.MarkNumber(num)
+			switch {
+			case errors.Is(err, ErrOutOfBounds):
+				log.Printf("error marking %d on board# %d, ignoring: bounds error", num, bi)
+			case errors.Is(err, ErrMarkedValueNotFound):
+				// This board did not contain the given number
+			case err == nil:
+				// Successfully marked, check for bingo before continuing to the next board
+				hasBingo, score := b.CheckBingo()
+				if hasBingo {
+					if _, ok := winningBoards[bi]; ok {
+						continue boardLoop
+					}
+					log.Printf("got bingo for board# %d: %v", bi, score)
+					lastNumber = num
+					lastScore = score
+					if len(winningBoards) == len(boards)-1 {
+						// We are the last board, let the giant squid win
+						return lastNumber, lastScore
+					}
+					winningBoards[bi] = struct{}{}
+				}
+			}
+		}
+	}
+
+	return lastNumber, lastScore
+}
+
 func main() {
 	flag.Parse()
 	input, err := os.ReadFile(*inputFile)
@@ -104,6 +141,12 @@ func main() {
 		log.Fatalf("error opening input file %q: %v", *inputFile, err)
 	}
 	numbers, boards := ParseInput(string(input))
-	winningNumber, score := PlayGame(numbers, boards)
-	log.Printf("The winning number (%d) yielded score %d: %d", winningNumber, score, winningNumber*score)
+
+	if *lastWinning {
+		winningNumber, score := PlayGameLastWinning(numbers, boards)
+		log.Printf("The winning number (%d) yielded score %d on the last winning board: %d", winningNumber, score, winningNumber*score)
+	} else {
+		winningNumber, score := PlayGame(numbers, boards)
+		log.Printf("The winning number (%d) yielded score %d: %d", winningNumber, score, winningNumber*score)
+	}
 }

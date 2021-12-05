@@ -5,11 +5,13 @@ import (
 )
 
 var (
-	testBoards          = 3
-	testNumbers         = 27
-	testWinningNumber   = 24
-	testWinningBoardSum = 188
-	testInput           = `7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
+	testBoards              = 3
+	testNumbers             = 27
+	testWinningNumber       = 24
+	testWinningBoardSum     = 188
+	testLastWinningNumber   = 13
+	testLastWinningBoardSum = 148
+	testInput               = `7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
  8  2 23  4 24
@@ -34,24 +36,37 @@ var (
 func TestParseInput(t *testing.T) {
 	numbers, boards := ParseInput(testInput)
 	if len(numbers) != testNumbers {
-		t.Fatalf("expected %d numbers, got %d", testNumbers, len(numbers))
+		t.Fatalf("%s: expected %d numbers, got %d", t.Name(), testNumbers, len(numbers))
 	}
-	t.Logf("expected %d numbers, got %d", testNumbers, len(numbers))
+	t.Logf("%s: expected %d numbers, got %d", t.Name(), testNumbers, len(numbers))
 	if len(boards) != testBoards {
-		t.Fatalf("expected %d boards, got %d", testBoards, len(boards))
+		t.Fatalf("%s: expected %d boards, got %d", t.Name(), testBoards, len(boards))
 	}
-	t.Logf("expected %d boards, got %d", testBoards, len(boards))
+	t.Logf("%s: expected %d boards, got %d", t.Name(), testBoards, len(boards))
 }
 
 func TestPlayGame(t *testing.T) {
 	numbers, boards := ParseInput(testInput)
 	winner, boardSum := PlayGame(numbers, boards)
 	if winner != testWinningNumber {
-		t.Fatalf("got %d as winning number, expected: %d", winner, testWinningNumber)
+		t.Fatalf("%s: got %d as winning number, expected: %d", t.Name(), winner, testWinningNumber)
 	}
-	t.Logf("got %d as winning number, expected: %d", winner, testWinningNumber)
+	t.Logf("%s: got %d as winning number, expected: %d", t.Name(), winner, testWinningNumber)
 	if boardSum != testWinningBoardSum {
-		t.Fatalf("got %d as winning board sum, expected: %d", boardSum, testWinningBoardSum)
+		t.Fatalf("%s: got %d as winning board sum, expected: %d", t.Name(), boardSum, testWinningBoardSum)
 	}
-	t.Logf("got %d as winning board sum, expected: %d", boardSum, testWinningBoardSum)
+	t.Logf("%s: got %d as winning board sum, expected: %d", t.Name(), boardSum, testWinningBoardSum)
+}
+
+func TestPlayGameLastWinning(t *testing.T) {
+	numbers, boards := ParseInput(testInput)
+	winner, boardSum := PlayGameLastWinning(numbers, boards)
+	if winner != testLastWinningNumber {
+		t.Fatalf("%s: got %d as winning number, expected: %d", t.Name(), winner, testLastWinningNumber)
+	}
+	t.Logf("%s: got %d as winning number, expected: %d", t.Name(), winner, testLastWinningNumber)
+	if boardSum != testLastWinningBoardSum {
+		t.Fatalf("%s: got %d as winning board sum, expected: %d", t.Name(), boardSum, testLastWinningBoardSum)
+	}
+	t.Logf("%s: got %d as winning board sum, expected: %d", t.Name(), boardSum, testLastWinningBoardSum)
 }
