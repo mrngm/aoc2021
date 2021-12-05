@@ -8,6 +8,8 @@ const (
 	testPowerConsumptionGammaRate   = 22
 	testPowerConsumptionEpsilonRate = 9
 	testPowerConsumption            = 198
+	testOxygenRating                = 23
+	testCo2ScrubRating              = 10
 )
 
 var (
@@ -33,4 +35,13 @@ func TestPowerConsumption(t *testing.T) {
 		t.Fatalf("%s: got gamma/epsilon %d/%d, expected %d/%d", t.Name(), gamma, epsilon, testPowerConsumptionGammaRate, testPowerConsumptionEpsilonRate)
 	}
 	t.Logf("%s: got gamma/epsilon %d/%d, expected %d/%d", t.Name(), gamma, epsilon, testPowerConsumptionGammaRate, testPowerConsumptionEpsilonRate)
+}
+
+func TestLifeSupportRating(t *testing.T) {
+	oxygen, co2scrub := LifeSupportRating(testInput)
+	if oxygen != testOxygenRating || co2scrub != testCo2ScrubRating {
+		t.Fatalf("%s: got oxygen/co2 %d/%d, expected %d/%d", t.Name(), oxygen, co2scrub, testOxygenRating, testCo2ScrubRating)
+	}
+	t.Logf("%s: got oxygen/co2 %d/%d, expected %d/%d", t.Name(), oxygen, co2scrub, testOxygenRating, testCo2ScrubRating)
+
 }
