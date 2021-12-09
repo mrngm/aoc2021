@@ -11,77 +11,95 @@ var (
 	RegexpLineSegment = regexp.MustCompile(`^(\d+),(\d+)\s+->\s+(\d+),(\d+)$`)
 )
 
+type EnumDirection int
+
+// Although the diagrams have placed (0, 0) in the top left, EnumDirection constants assumes (0, 0) in the bottom left, just like regular XY diagrams
+const (
+	DirectionPoint EnumDirection = iota
+	DirectionHorizontalRight
+	DirectionHorizontalLeft
+	DirectionVerticalUp
+	DirectionVerticalDown
+	DirectionDiagonalIncrease
+	DirectionDiagonalDecrease
+	DirectionDiagonalReverseIncrease // from left to right, bottom to top
+	DirectionDiagonalReverseDecrease // from left to right, top to bottom
+)
+
 type Point struct {
 	X int
 	Y int
 }
 
 type LineSegment struct {
-	Begin *Point
-	End   *Point
-}
-
-func (ls *LineSegment) IsHorizontal() bool {
-	return ls.Begin.X == ls.End.X
-}
-
-func (ls *LineSegment) IsVertical() bool {
-	return ls.Begin.Y == ls.End.Y
+	Begin     *Point
+	End       *Point
+	Direction EnumDirection
 }
 
 func (ls *LineSegment) PointCoverage() []*Point {
 	var ret []*Point
-	if !ls.IsHorizontal() && !ls.IsVertical() {
-		log.Printf("XXX: non-horizontal/vertical line segments are currently not supported: %v,%v", ls.Begin, ls.End)
-		return ret
-	}
-	ret = append(ret, ls.Begin)
-	ret = append(ret, ls.End)
-	if ls.IsHorizontal() {
-		// Only Y coordinates differ. Range over the difference between the Y coordinates
-		for y := ls.Begin.Y; y != ls.End.Y; {
-			switch {
-			case y > ls.End.Y:
-				y--
-				if y == ls.End.Y {
-					// Don't add the point
-					continue
-				}
-			case y < ls.End.Y:
-				y++
-				if y == ls.End.Y {
-					// Don't add the point
-					continue
-				}
-			default:
-				// The line segment is actually a dot.
-				continue
-			}
+
+	switch ls.Direction {
+	case DirectionHorizontalRight:
+		for x := ls.Begin.X; x <= ls.End.X; x++ {
+			ret = append(ret, &Point{x, ls.Begin.Y})
+		}
+	case DirectionHorizontalLeft:
+		for x := ls.Begin.X; x >= ls.End.X; x-- {
+			ret = append(ret, &Point{x, ls.Begin.Y})
+		}
+	case DirectionVerticalUp:
+		for y := ls.Begin.Y; y <= ls.End.Y; y++ {
 			ret = append(ret, &Point{ls.Begin.X, y})
 		}
-	}
-
-	if ls.IsVertical() {
-		// Only X coordinates differ. Range over the difference between the X coordinates
-		for x := ls.Begin.X; x != ls.End.X; {
-			switch {
-			case x > ls.End.X:
-				x--
-				if x == ls.End.X {
-					// Don't add the point
-					continue
-				}
-			case x < ls.End.X:
-				x++
-				if x == ls.End.X {
-					// Don't add the point
-					continue
-				}
-			default:
-				// The line segment is actually a dot.
-				continue
+	case DirectionVerticalDown:
+		for y := ls.Begin.Y; y >= ls.End.Y; y-- {
+			ret = append(ret, &Point{ls.Begin.X, y})
+		}
+	case DirectionDiagonalIncrease:
+		x := ls.Begin.X
+		y := ls.Begin.Y
+		for {
+			if x > ls.End.X || y > ls.End.Y {
+				break
 			}
-			ret = append(ret, &Point{x, ls.Begin.Y})
+			ret = append(ret, &Point{x, y})
+			x++
+			y++
+		}
+	case DirectionDiagonalDecrease:
+		x := ls.Begin.X
+		y := ls.Begin.Y
+		for {
+			if x > ls.End.X || y < ls.End.Y {
+				break
+			}
+			ret = append(ret, &Point{x, y})
+			x++
+			y--
+		}
+	case DirectionDiagonalReverseIncrease:
+		x := ls.Begin.X
+		y := ls.Begin.Y
+		for {
+			if x < ls.End.X || y > ls.End.Y {
+				break
+			}
+			ret = append(ret, &Point{x, y})
+			x--
+			y++
+		}
+	case DirectionDiagonalReverseDecrease:
+		x := ls.Begin.X
+		y := ls.Begin.Y
+		for {
+			if x < ls.End.X || y < ls.End.Y {
+				break
+			}
+			ret = append(ret, &Point{x, y})
+			x--
+			y--
 		}
 	}
 
@@ -135,9 +153,41 @@ func ExtractLineSegments(in []string) []*LineSegment {
 			log.Printf("could not parse y2 (%q): %v, ignoring line", matches[0][4], err)
 			continue
 		}
+		var direction EnumDirection
+
+		// Although the diagrams have placed (0, 0) in the top left, this part assumes (0, 0) in the bottom left, just like regular XY diagrams
+		if x1 == x2 {
+			if y1 > y2 {
+				direction = DirectionVerticalDown
+			} else {
+				direction = DirectionVerticalUp
+			}
+		} else if y1 == y2 {
+			if x1 > x2 {
+				direction = DirectionHorizontalLeft
+			} else {
+				direction = DirectionHorizontalRight
+			}
+		} else {
+			if x1 > x2 {
+				if y1 > y2 {
+					direction = DirectionDiagonalReverseDecrease
+				} else {
+					direction = DirectionDiagonalReverseIncrease
+				}
+			} else {
+				if y1 > y2 {
+					direction = DirectionDiagonalDecrease
+				} else {
+					direction = DirectionDiagonalIncrease
+				}
+			}
+
+		}
 		segment := &LineSegment{
 			&Point{x1, y1},
 			&Point{x2, y2},
+			direction,
 		}
 		ret = append(ret, segment)
 	}
@@ -145,7 +195,7 @@ func ExtractLineSegments(in []string) []*LineSegment {
 	return ret
 }
 
-func GenerateCoverageDiagram(in []*LineSegment) [][]int {
+func GenerateCoverageDiagram(in []*LineSegment, skipDiagonal bool) [][]int {
 	topLeftX, topLeftY := 0, 0
 	bottomRightX, bottomRightY := 0, 0
 	// Determine maximum range
@@ -188,7 +238,15 @@ func GenerateCoverageDiagram(in []*LineSegment) [][]int {
 	}
 
 	for _, segment := range in {
+		if skipDiagonal {
+			switch segment.Direction {
+			case DirectionHorizontalRight, DirectionHorizontalLeft, DirectionVerticalUp, DirectionVerticalDown:
+			default:
+				continue
+			}
+		}
 		points := segment.PointCoverage()
+		log.Printf("len(points): %d, segment: %+v", len(points), segment)
 		for _, p := range points {
 			diagram[p.Y][p.X]++
 		}

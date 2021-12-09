@@ -7,8 +7,9 @@ import (
 )
 
 var (
-	inputFile = flag.String("input", "input", "The input file")
-	threshold = flag.Int("threshold", 2, "Minimum number of points that overlap")
+	inputFile    = flag.String("input", "input", "The input file")
+	threshold    = flag.Int("threshold", 2, "Minimum number of points that overlap")
+	useDiagonals = flag.Bool("diagonals", false, "Include diagonals in calculation")
 )
 
 func main() {
@@ -20,8 +21,12 @@ func main() {
 
 	lines := ReadVentLines(string(input))
 	segments := ExtractLineSegments(lines)
-	diagram := GenerateCoverageDiagram(segments)
+	diagram := GenerateCoverageDiagram(segments, !*useDiagonals)
 	n := NumberOfOverlappingPoints(diagram, *threshold)
 
-	log.Printf("Scanning for hydrothermal vents, using %d segments, we found %d points where at least %d points overlap", len(segments), n, *threshold)
+	diagonals := ""
+	if *useDiagonals {
+		diagonals = " (with diagonals)"
+	}
+	log.Printf("Scanning for hydrothermal vents%s, using %d segments, we found %d points where at least %d points overlap", diagonals, len(segments), n, *threshold)
 }

@@ -31,6 +31,20 @@ var (
 ..........
 222111....
 `
+
+	testNumberOverlappingPointsWithDiagonals = 12
+	testOverlappingPointsThresholdDiagonals  = 2
+	testCoverageDiagramDiagonals             = `1.1....11.
+.111...2..
+..2.1.111.
+...1.2.2..
+.112313211
+...1.2....
+..1...1...
+.1.....1..
+1.......1.
+222111....
+`
 )
 
 func TestReadVentLines(t *testing.T) {
@@ -53,7 +67,7 @@ func TestExtractLineSegments(t *testing.T) {
 func TestGenerateCoverageDiagramString(t *testing.T) {
 	lines := ReadVentLines(testInput)
 	segments := ExtractLineSegments(lines)
-	diagram := GenerateCoverageDiagram(segments)
+	diagram := GenerateCoverageDiagram(segments, true)
 	diagramString := DiagramToString(diagram)
 	if diagramString != testCoverageDiagram {
 		t.Fatalf("coverage diagram\n%q\n did not match expected one:\n%q\n", diagramString, testCoverageDiagram)
@@ -64,10 +78,32 @@ func TestGenerateCoverageDiagramString(t *testing.T) {
 func TestNumberOfOverlappingPoints(t *testing.T) {
 	lines := ReadVentLines(testInput)
 	segments := ExtractLineSegments(lines)
-	diagram := GenerateCoverageDiagram(segments)
+	diagram := GenerateCoverageDiagram(segments, true)
 	n := NumberOfOverlappingPoints(diagram, testOverlappingPointsThreshold)
 	if n != testNumberOverlappingPoints {
 		t.Fatalf("found %d overlapping points (threshold %d), but expected %d", n, testOverlappingPointsThreshold, testNumberOverlappingPoints)
 	}
 	t.Logf("found %d overlapping points (threshold %d), expected %d", n, testOverlappingPointsThreshold, testNumberOverlappingPoints)
+}
+
+func TestGenerateCoverageDiagramStringWithDiagonals(t *testing.T) {
+	lines := ReadVentLines(testInput)
+	segments := ExtractLineSegments(lines)
+	diagram := GenerateCoverageDiagram(segments, false)
+	diagramString := DiagramToString(diagram)
+	if diagramString != testCoverageDiagramDiagonals {
+		t.Fatalf("coverage diagram\n%q\n(with diagonals) did not match expected one:\n%q\n", diagramString, testCoverageDiagramDiagonals)
+	}
+	t.Logf("successfully generated coverage diagram with diagonals")
+}
+
+func TestNumberOfOverlappingPointsWithDiagonals(t *testing.T) {
+	lines := ReadVentLines(testInput)
+	segments := ExtractLineSegments(lines)
+	diagram := GenerateCoverageDiagram(segments, false)
+	n := NumberOfOverlappingPoints(diagram, testOverlappingPointsThresholdDiagonals)
+	if n != testNumberOverlappingPointsWithDiagonals {
+		t.Fatalf("found %d overlapping points (threshold %d, with diagonals), but expected %d", n, testOverlappingPointsThresholdDiagonals, testNumberOverlappingPointsWithDiagonals)
+	}
+	t.Logf("found %d overlapping points (threshold %d, with diagonals), but expected %d", n, testOverlappingPointsThresholdDiagonals, testNumberOverlappingPointsWithDiagonals)
 }
