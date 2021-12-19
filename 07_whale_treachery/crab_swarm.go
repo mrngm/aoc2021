@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"log"
+	"math"
 	"os"
 	"sort"
 	"strconv"
@@ -10,7 +11,8 @@ import (
 )
 
 var (
-	inputFile = flag.String("input", "input", "The input file")
+	inputFile  = flag.String("input", "input", "The input file")
+	meanMethod = flag.Bool("useMean", false, "Use mean instead of median")
 )
 
 func ParseInput(in string) []int {
@@ -38,6 +40,14 @@ func Median(in []int) int {
 	return (in[middle] + in[middle1]) / 2
 }
 
+func Mean(in []int) float64 {
+	intermediate := 0
+	for _, i := range in {
+		intermediate += i
+	}
+	return float64(intermediate) / float64(len(in))
+}
+
 func FuelConsumption(in []int) int {
 	median := Median(in)
 	ret := 0
@@ -51,6 +61,32 @@ func FuelConsumption(in []int) int {
 	return ret
 }
 
+func DistanceFuelUsage(distance int) int {
+	if distance <= 0 {
+		return 0
+	}
+	if distance == 1 {
+		return 1
+	}
+	return distance + DistanceFuelUsage(distance-1)
+}
+
+func FuelConsumptionUsingMean(in []int, mean int) int {
+	if mean == -1 {
+		// Calculate the mean from our input
+		mean = int(math.Floor(Mean(in)))
+	}
+	ret := 0
+	for _, crab := range in {
+		if crab >= mean {
+			ret += DistanceFuelUsage(crab - mean)
+		} else {
+			ret += DistanceFuelUsage(mean - crab)
+		}
+	}
+	return ret
+}
+
 func main() {
 	flag.Parse()
 	input, err := os.ReadFile(*inputFile)
@@ -59,6 +95,11 @@ func main() {
 	}
 
 	crabs := ParseInput(string(input))
-	consumption := FuelConsumption(crabs)
+	var consumption int
+	if *meanMethod {
+		consumption = FuelConsumptionUsingMean(crabs, -1)
+	} else {
+		consumption = FuelConsumption(crabs)
+	}
 	log.Printf("For %d crabs, we need %d fuel to align them all", len(crabs), consumption)
 }
