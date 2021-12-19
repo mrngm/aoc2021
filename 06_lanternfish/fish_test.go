@@ -1,17 +1,17 @@
 package main
 
 import (
-	"testing"
 	"reflect"
+	"testing"
 )
 
 var (
-	testStringInput = "3,4,3,1,2"
-	testInput = []int{3,4,3,1,2}
-	testDays18 = 18
-	testAfter18Days = "6,0,6,4,5,6,0,1,1,2,6,0,1,1,1,2,2,3,3,4,6,7,8,8,8,8"
+	testStringInput          = "3,4,3,1,2"
+	testInput                = []int{3, 4, 3, 1, 2}
+	testDays18               = 18
+	testAfter18Days          = "6,0,6,4,5,6,0,1,1,2,6,0,1,1,1,2,2,3,3,4,6,7,8,8,8,8"
 	testAfter18DaysFishCount = 26
-	testDays80 = 80
+	testDays80               = 80
 	testAfter80DaysFishCount = 5934
 )
 
@@ -26,7 +26,7 @@ func TestInitialize(t *testing.T) {
 	init := Initialize(testInput)
 	for n, fish := range init {
 		if fish.TimeLeft != testInput[n] {
-			t.Fatalf("fish %d did not initialize properly, timeleft %d, expected %d", n ,fish.TimeLeft, testInput[n])
+			t.Fatalf("fish %d did not initialize properly, timeleft %d, expected %d", n, fish.TimeLeft, testInput[n])
 		}
 	}
 }

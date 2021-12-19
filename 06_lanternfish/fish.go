@@ -1,23 +1,55 @@
 package main
 
 import (
-	"strconv"
-	"strings"
+	"flag"
+	"fmt"
 	"log"
 	"os"
-	"fmt"
-	"flag"
+	"strconv"
+	"strings"
 )
 
 var (
-	inputFile    = flag.String("input", "input", "The input file")
-	days = flag.Int("days", 18, "Number of days to run")
+	inputFile = flag.String("input", "input", "The input file")
+	days      = flag.Int("days", 18, "Number of days to run")
 )
 
 const (
 	ReproductionInterval = 6
-	FirstCycleDelay = 2
+	FirstCycleDelay      = 2
 )
+
+type LanternFishBucket []int
+
+func NewFishBucket(n int, fish []int) LanternFishBucket {
+	ret := make(LanternFishBucket, n)
+	for _, f := range fish {
+		ret[f]++
+	}
+	return ret
+}
+
+func (f LanternFishBucket) Progress() LanternFishBucket {
+	tmpBucket := make(LanternFishBucket, len(f))
+	for n := len(f) - 1; n >= 0; n-- {
+		if n == 0 {
+			// Move these fish to tmpBucket[ReproductionInterval] and add the same number of fish to tmpBucket[ReproductionInterval+FirstCycleDelay]
+			tmpBucket[ReproductionInterval] += f[n]
+			tmpBucket[ReproductionInterval+FirstCycleDelay] += f[n]
+			continue
+		}
+		tmpBucket[n-1] = f[n]
+	}
+	return tmpBucket
+}
+
+func (f LanternFishBucket) Count() int {
+	ret := 0
+	for n := len(f) - 1; n >= 0; n-- {
+		ret += f[n]
+	}
+	return ret
+}
 
 type LanternFish struct {
 	TimeLeft int
@@ -80,7 +112,7 @@ func Iterate(fish []*LanternFish, d, maxDays int, doLog bool) []*LanternFish {
 		}
 		maxDaysLen := len(strconv.Itoa(maxDays))
 		days := fmt.Sprintf("%d", maxDaysLen)
-		log.Printf("After %"+ days +"d %s %s", d, daySuffix, FormatFish(fish))
+		log.Printf("After %"+days+"d %s %s", d, daySuffix, FormatFish(fish))
 	}
 	return fish
 }
@@ -108,6 +140,16 @@ func main() {
 	}
 
 	fishConfig := ParseInput(string(input))
+
+	if *days >= 80 {
+		bucket := NewFishBucket(ReproductionInterval+FirstCycleDelay+1, fishConfig)
+		for d := 1; d <= *days; d++ {
+			bucket = bucket.Progress()
+		}
+		log.Printf("After %d days, the number of fish is %d", *days, bucket.Count())
+		return
+	}
+
 	fish := Initialize(fishConfig)
 
 	for d := 0; d <= *days; d++ {
